@@ -3,6 +3,7 @@ package telran.java51.book.service;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.usertype.UserCollectionType;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,22 +71,23 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public Set<BookDto> findBooksByAuthor(String author) {
-		return bookRepository.findBooksByAuthorsName(author).map(b -> modelMapper.map(b, BookDto.class))
-				.collect(Collectors.toSet());
+	public Set<BookDto> findBooksByAuthor(String authorName) {
+		Author author = authorRepository.findById(authorName).orElseThrow(EntityNotFoundException::new);
+		return author.getBooks().stream().map(b -> modelMapper.map(b, BookDto.class)).collect(Collectors.toSet());
+//		return bookRepository.findBooksByAuthorsName(author).map(b -> modelMapper.map(b, BookDto.class))
+//				.collect(Collectors.toSet());
 //		return null;
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public Set<BookDto> findBooksByPublisher(String publisher) {
-		return bookRepository.findBooksByPublisherPublisherNameIgnoreCase(publisher)
-				.map(b -> modelMapper.map(b, BookDto.class)).collect(Collectors.toSet());
+	public Set<BookDto> findBooksByPublisher(String publisherName) {
+		Publisher publisher = publisherRepository.findById(publisherName).orElseThrow(EntityNotFoundException::new);
+		return publisher.getBooks().stream().map(b -> modelMapper.map(b, BookDto.class)).collect(Collectors.toSet());
+//		return bookRepository.findBooksByPublisherPublisherNameIgnoreCase(publisher)
+//				.map(b -> modelMapper.map(b, BookDto.class)).collect(Collectors.toSet());
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public Set<AuthorDto> findBookAuthors(String isbn) {
 //		return authorRepository.findBookAuthors(isbn).map(a -> modelMapper.map(a, AuthorDto.class))
 //				.collect(Collectors.toSet());
@@ -94,8 +96,12 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Set<String> findPublishersByAuthor(String authorName) {
-		return publisherRepository.findPublishersByAuthor(authorName);
+//		return publisherRepository.findPublishersByAuthor(authorName);
+		return publisherRepository.findDistinctPublishersByBooksAuthorsNameIgnoreCase(authorName)
+				.map(Publisher::getPublisherName).collect(Collectors.toSet());
+
 	}
 
 	@Override
@@ -103,7 +109,7 @@ public class BookServiceImpl implements BookService {
 	public AuthorDto removeAuthor(String author) {
 		Author authorVictim = authorRepository.findById(author).orElseThrow(EntityNotFoundException::new);
 //		bookRepository.findBooksByAuthorsName(author).forEach(b -> b.getAuthors().clear());
-		bookRepository.deleteByAuthorsName(author);
+//		bookRepository.deleteByAuthorsName(author);
 		authorRepository.delete(authorVictim);
 		return modelMapper.map(authorVictim, AuthorDto.class);
 	}
