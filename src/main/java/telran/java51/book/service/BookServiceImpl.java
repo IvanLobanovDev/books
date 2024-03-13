@@ -72,7 +72,7 @@ public class BookServiceImpl implements BookService {
 	@Override
 	@Transactional(readOnly = true)
 	public Set<BookDto> findBooksByAuthor(String author) {
-		return bookRepository.findBooksByAuthor(author).map(b -> modelMapper.map(b, BookDto.class))
+		return bookRepository.findBooksByAuthorsName(author).map(b -> modelMapper.map(b, BookDto.class))
 				.collect(Collectors.toSet());
 //		return null;
 	}
@@ -87,22 +87,23 @@ public class BookServiceImpl implements BookService {
 	@Override
 	@Transactional(readOnly = true)
 	public Set<AuthorDto> findBookAuthors(String isbn) {
-		return authorRepository.findBookAuthors(isbn).map(a -> modelMapper.map(a, AuthorDto.class))
-				.collect(Collectors.toSet());
+//		return authorRepository.findBookAuthors(isbn).map(a -> modelMapper.map(a, AuthorDto.class))
+//				.collect(Collectors.toSet());
+		Book book = bookRepository.findById(isbn).orElseThrow(EntityNotFoundException::new);
+		return book.getAuthors().stream().map(a -> modelMapper.map(a, AuthorDto.class)).collect(Collectors.toSet());
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public Set<String> findPublishersByAuthor(String author) {
-		return publisherRepository.findPublisherByAuthor(author).map(p -> p.getPublisherName())
-				.collect(Collectors.toSet());
+	public Set<String> findPublishersByAuthor(String authorName) {
+		return publisherRepository.findPublishersByAuthor(authorName);
 	}
 
 	@Override
 	@Transactional
 	public AuthorDto removeAuthor(String author) {
 		Author authorVictim = authorRepository.findById(author).orElseThrow(EntityNotFoundException::new);
-		bookRepository.findBooksByAuthor(author).forEach(b -> b.getAuthors().clear());
+//		bookRepository.findBooksByAuthorsName(author).forEach(b -> b.getAuthors().clear());
+		bookRepository.deleteByAuthorsName(author);
 		authorRepository.delete(authorVictim);
 		return modelMapper.map(authorVictim, AuthorDto.class);
 	}
