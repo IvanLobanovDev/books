@@ -1,20 +1,26 @@
 package telran.java51.book.dao;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import telran.java51.book.model.Author;
 import telran.java51.book.model.Book;
 
-public interface BookRepository extends JpaRepository<Book, String> {
+public interface BookRepository {
 
-//	@Query("select b from Book b join b.authors a where lower(a.name) like lower(?1)")
-//	Stream<Book> findBooksByAuthor(String author);
 	Stream<Book> findBooksByAuthorsName(String author);
 	
-	Stream<Book> findBooksByPublisherPublisherNameIgnoreCase(String publisher);
+	Stream<Book> findBooksByPublishersName(String publisher);
+
+	boolean existsById(String isbn);
 	
-	void deleteByAuthorsName(String author);
+	Book save(Book book);
+	
+	Optional<Book> findById(String isbn);
+
+	void delete(Book book);
 
 }
